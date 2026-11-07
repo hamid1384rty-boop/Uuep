@@ -57,7 +57,7 @@ jobs:
         working-directory: BrainChart
         run: |
           set -o pipefail
-          gradle assembleDebug --no-daemon --stacktrace 2>&1 | tee ../build.log
+          gradle assembleDebug --no-daemon --stacktrace --info 2>&1 | tee "$GITHUB_WORKSPACE/build.log"
 
       - name: Show build errors in Summary (on failure)
         if: failure()
@@ -65,11 +65,11 @@ jobs:
           {
             echo "## ❌ خطای بیلد"
             echo '```'
-            grep -A 25 "What went wrong" build.log || true
+            grep -A 25 "What went wrong" "$GITHUB_WORKSPACE/build.log" || true
             echo "--- خطاهای pip / پکیج‌ها ---"
-            grep -iE "pip|ERROR|No matching|Could not|not found|requirement" build.log | tail -n 60 || true
+            grep -iE "pip|ERROR|No matching|Could not|not found|requirement" "$GITHUB_WORKSPACE/build.log" | tail -n 60 || true
             echo "--- آخرین خطوط لاگ ---"
-            tail -n 40 build.log
+            tail -n 40 "$GITHUB_WORKSPACE/build.log"
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
@@ -79,3 +79,11 @@ jobs:
           name: BrainChart-debug-apk
           path: BrainChart/app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
+
+      - name: Upload full build log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: build.log
+          if-no-files-found: warn
