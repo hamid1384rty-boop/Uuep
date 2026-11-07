@@ -2,7 +2,7 @@
 # ساخت APK اندروید (debug) از پروژه‌ی BrainChart
 # پروژه باید به یکی از این دو شکل در ریپو باشد:
 #   1) پوشه‌ی BrainChart/ (با settings.gradle.kts داخلش)
-#   2) فایل BrainChart-android-source.zip در ریشه‌ی ریپو (خودکار باز می‌شود)
+#   2) هر فایل BrainChart*.zip در ریشه‌ی ریپو (خودکار باز می‌شود؛ مثلاً "(2)" در اسمش مهم نیست)
 
 name: Build APK
 
@@ -25,11 +25,13 @@ jobs:
       - name: Unzip project if zip is present
         run: |
           if [ ! -f BrainChart/settings.gradle.kts ]; then
-            if [ -f BrainChart-android-source.zip ]; then
+            ZIP=$(ls BrainChart*.zip 2>/dev/null | head -1)
+            if [ -n "$ZIP" ]; then
+              echo "📦 زیپ پیدا شد: $ZIP"
               mkdir -p BrainChart
-              unzip -o -q BrainChart-android-source.zip -d BrainChart
+              unzip -o -q "$ZIP" -d BrainChart
             else
-              echo "❌ پروژه پیدا نشد: پوشه BrainChart/ یا فایل BrainChart-android-source.zip باید در ریشه‌ی ریپو باشد"
+              echo "❌ پروژه پیدا نشد: پوشه BrainChart/ یا فایلی به اسم BrainChart...zip باید در ریشه‌ی ریپو باشد"
               exit 1
             fi
           fi
