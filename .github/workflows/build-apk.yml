@@ -65,7 +65,11 @@ jobs:
           {
             echo "## ❌ خطای بیلد"
             echo '```'
-            grep -A 25 "What went wrong" build.log || tail -n 80 build.log
+            grep -A 25 "What went wrong" build.log || true
+            echo "--- خطاهای pip / پکیج‌ها ---"
+            grep -iE "pip|ERROR|No matching|Could not|not found|requirement" build.log | tail -n 60 || true
+            echo "--- آخرین خطوط لاگ ---"
+            tail -n 40 build.log
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
