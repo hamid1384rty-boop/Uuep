@@ -62,6 +62,7 @@ jobs:
       - name: Show build errors in Summary (on failure)
         if: failure()
         run: |
+          [ -f "$GITHUB_WORKSPACE/build.log" ] || exit 0
           {
             echo "## ❌ خطای بیلد"
             echo '```'
