@@ -43,6 +43,13 @@ jobs:
           distribution: temurin
           java-version: '17'
 
+      # Chaquopy از python3 خود runner برای ساخت محیط pip استفاده می‌کند.
+      # runner جدید Python 3.14 دارد که pip آن کرش می‌کند (ماژول cgi حذف شده)، پس Python 3.11 نصب می‌کنیم.
+      - name: Set up Python 3.11 (for Chaquopy)
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
       - name: Install Android SDK packages
         run: |
           SDKM=$(ls -d "$ANDROID_HOME"/cmdline-tools/*/bin/sdkmanager 2>/dev/null | head -1)
