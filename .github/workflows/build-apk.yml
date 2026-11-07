@@ -1,6 +1,6 @@
 # .github/workflows/build-apk.yml
 # ساخت APK اندروید (debug) از پروژه‌ی BrainChart
-# پروژه می‌تواند به یکی از این دو شکل در ریپو باشد:
+# پروژه باید به یکی از این دو شکل در ریپو باشد:
 #   1) پوشه‌ی BrainChart/ (با settings.gradle.kts داخلش)
 #   2) فایل BrainChart-android-source.zip در ریشه‌ی ریپو (خودکار باز می‌شود)
 
@@ -15,6 +15,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    env:
+      ANDROID_HOME: /usr/local/lib/android/sdk
 
     steps:
       - name: Checkout
@@ -39,14 +41,12 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Accept Android SDK licenses (non-interactive)
-        env:
-          ANDROID_HOME: /usr/local/lib/android/sdk
+      - name: Install Android SDK packages
         run: |
-          SDKM="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
-          if [ ! -x "$SDKM" ]; then SDKM=$(ls -d "$ANDROID_HOME"/cmdline-tools/*/bin/sdkmanager 2>/dev/null | head -1); fi
-          yes | "$SDKM" --sdk_root="$ANDROID_HOME" --licenses > /dev/null 2>&1 || true
-          echo "ANDROID_HOME=$ANDROID_HOME" >> "$GITHUB_ENV"
+          SDKM=$(ls -d "$ANDROID_HOME"/cmdline-tools/*/bin/sdkmanager 2>/dev/null | head -1)
+          echo "sdkmanager: $SDKM"
+          yes | "$SDKM" --sdk_root="$ANDROID_HOME" --licenses
+          "$SDKM" --sdk_root="$ANDROID_HOME" "platform-tools" "platforms;android-34" "build-tools;34.0.0"
 
       - name: Set up Gradle 8.7
         uses: gradle/actions/setup-gradle@v4
@@ -55,9 +55,19 @@ jobs:
 
       - name: Build debug APK
         working-directory: BrainChart
-        env:
-          ANDROID_HOME: /usr/local/lib/android/sdk
-        run: gradle assembleDebug --no-daemon --stacktrace
+        run: |
+          set -o pipefail
+          gradle assembleDebug --no-daemon --stacktrace 2>&1 | tee ../build.log
+
+      - name: Show build errors in Summary (on failure)
+        if: failure()
+        run: |
+          {
+            echo "## ❌ خطای بیلد"
+            echo '```'
+            grep -A 25 "What went wrong" build.log || tail -n 80 build.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
