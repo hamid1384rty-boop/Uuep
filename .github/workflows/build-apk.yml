@@ -39,8 +39,14 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+      - name: Accept Android SDK licenses (non-interactive)
+        env:
+          ANDROID_HOME: /usr/local/lib/android/sdk
+        run: |
+          SDKM="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          if [ ! -x "$SDKM" ]; then SDKM=$(ls -d "$ANDROID_HOME"/cmdline-tools/*/bin/sdkmanager 2>/dev/null | head -1); fi
+          yes | "$SDKM" --sdk_root="$ANDROID_HOME" --licenses > /dev/null 2>&1 || true
+          echo "ANDROID_HOME=$ANDROID_HOME" >> "$GITHUB_ENV"
 
       - name: Set up Gradle 8.7
         uses: gradle/actions/setup-gradle@v4
@@ -49,6 +55,8 @@ jobs:
 
       - name: Build debug APK
         working-directory: BrainChart
+        env:
+          ANDROID_HOME: /usr/local/lib/android/sdk
         run: gradle assembleDebug --no-daemon --stacktrace
 
       - name: Upload APK
